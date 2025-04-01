@@ -4,8 +4,16 @@ import hashlib
 import urllib.parse
 from mangum import Mangum
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Или укажи конкретный origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
