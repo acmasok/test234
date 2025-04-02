@@ -1,3 +1,4 @@
+import json
 import os
 import hmac
 import hashlib
@@ -29,42 +30,42 @@ if not BOT_TOKEN:
 # Проверка подписи
 def is_valid_init_data(init_data: str, bot_token: str) -> bool:
     print(f"🔐 Начало проверки initData:\n{init_data}\n")
-
     try:
-        # Парсинг строки запроса
         parsed = dict(urllib.parse.parse_qsl(init_data))
         print(f"📦 Распарсенные параметры:\n{parsed}\n")
 
-        # Извлекаем hash
         received_hash = parsed.pop("hash", None)
-        parsed.pop("signature", None)  # ❗️удаляем лишнее
+        parsed.pop("signature", None)
 
-        print(f"🔍 Полученный hash: {received_hash}")
         if not received_hash:
             print("❌ Hash отсутствует в initData")
             return False
 
-        # Сортируем и формируем data_check_string
+        # Фиксируем формат поля user
+        if "user" in parsed:
+            try:
+                user_obj = json.loads(parsed["user"])
+                parsed["user"] = json.dumps(user_obj, separators=(",", ":"), ensure_ascii=False)
+            except Exception as e:
+                print(f"⚠️ Не удалось распарсить user: {e}")
+
         sorted_items = sorted(parsed.items())
         data_check_string = "\n".join(f"{k}={v}" for k, v in sorted_items)
         print(f"📄 Data check string:\n{data_check_string}\n")
 
-        # Генерация secret_key по документации Telegram
         secret_key = hmac.new(bot_token.encode(), b"WebAppData", hashlib.sha256).digest()
-        print(f"🔑 Сгенерированный секретный ключ (байты): {secret_key.hex()}\n")
+        print(f"🔑 Секретный ключ: {secret_key.hex()}\n")
 
-        # Хэшируем data_check_string
         calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         print(f"🧮 Вычисленный hash: {calculated_hash}")
+        print(f"✅ Результат проверки: {'валидный' if calculated_hash == received_hash else 'невалидный'}\n")
 
-        # Сравнение хэшей
-        is_valid = calculated_hash == received_hash
-        print(f"✅ Результат проверки: {'валидный' if is_valid else 'невалидный'}\n")
-        return is_valid
+        return calculated_hash == received_hash
 
     except Exception as e:
-        print(f"❌ Исключение в is_valid_init_data: {e}")
+        print(f"❌ Ошибка: {e}")
         return False
+
 
 
 # Основной обработчик запроса от Telegram WebApp
