@@ -37,6 +37,8 @@ def is_valid_init_data(init_data: str, bot_token: str) -> bool:
 
         # Извлекаем hash
         received_hash = parsed.pop("hash", None)
+        parsed.pop("signature", None)  # ❗️удаляем лишнее
+
         print(f"🔍 Полученный hash: {received_hash}")
         if not received_hash:
             print("❌ Hash отсутствует в initData")
