@@ -28,10 +28,11 @@ if not BOT_TOKEN:
 
 # Проверка подписи
 def is_valid_init_data(init_data: str, bot_token: str) -> bool:
-    print(f"🔐 Проверка подписи initData: {init_data[:100]}...")
+    print(f"🔐 Проверка подписи initData: {init_data}...")
     try:
         parsed = dict(urllib.parse.parse_qsl(init_data))
         received_hash = parsed.pop("hash", None)
+        print(f"received_hash: {received_hash}")
         if not received_hash:
             print("❌ Отсутствует hash в initData")
             return False
