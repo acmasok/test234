@@ -28,24 +28,40 @@ if not BOT_TOKEN:
 
 # Проверка подписи
 def is_valid_init_data(init_data: str, bot_token: str) -> bool:
-    print(f"🔐 Проверка подписи initData: {init_data}...")
+    print(f"🔐 Начало проверки initData:\n{init_data}\n")
+
     try:
+        # Парсинг строки запроса
         parsed = dict(urllib.parse.parse_qsl(init_data))
+        print(f"📦 Распарсенные параметры:\n{parsed}\n")
+
+        # Извлекаем hash
         received_hash = parsed.pop("hash", None)
-        print(f"received_hash: {received_hash}")
+        print(f"🔍 Полученный hash: {received_hash}")
         if not received_hash:
-            print("❌ Отсутствует hash в initData")
+            print("❌ Hash отсутствует в initData")
             return False
 
-        data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
-        secret_key = hashlib.sha256(bot_token.encode()).digest()
-        calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        # Сортируем и формируем data_check_string
+        sorted_items = sorted(parsed.items())
+        data_check_string = "\n".join(f"{k}={v}" for k, v in sorted_items)
+        print(f"📄 Data check string:\n{data_check_string}\n")
 
+        # Генерация secret_key по документации Telegram
+        secret_key = hmac.new(bot_token.encode(), b"WebAppData", hashlib.sha256).digest()
+        print(f"🔑 Сгенерированный секретный ключ (байты): {secret_key.hex()}\n")
+
+        # Хэшируем data_check_string
+        calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        print(f"🧮 Вычисленный hash: {calculated_hash}")
+
+        # Сравнение хэшей
         is_valid = calculated_hash == received_hash
-        print(f"✅ Хэш валидный: {is_valid}")
+        print(f"✅ Результат проверки: {'валидный' if is_valid else 'невалидный'}\n")
         return is_valid
+
     except Exception as e:
-        print(f"❌ Ошибка в is_valid_init_data: {e}")
+        print(f"❌ Исключение в is_valid_init_data: {e}")
         return False
 
 
